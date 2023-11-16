@@ -38,79 +38,68 @@ int TreeDtor(Tree *tree, Node *root)
     TreeDtorSup(tree, root->left );
     TreeDtorSup(tree, root->right);
 
-    if(tree->root == root)
-    {
-        free(root);
-        tree->size--;
-
-        tree->root = NULL;
-    }
-    else
+    if(tree->root != root)
     {
         root->left  = NULL;
         root->right = NULL;
 
         Node *parent = TreeSearchParent(tree, root);
 
-        free(root);
-        tree->size--;
-
         if(parent->left == root) parent->left  = NULL;
         else                     parent->right = NULL;
     }
+    else
+    {
+        tree->root = NULL;
+    }
+
+    free(root);
+    tree->size--;
 
     return EXIT_SUCCESS;
 }
 
-
-static Node *AddNodeSup(Tree *tree, Node *tree_node, const data_t val, PlacePref pref)
-{
-    Node **next = NULL;
-
-    switch(pref)
-    {
-        case LEFT:
-        {
-            next = &(tree_node->left);
-
-            break;
-        }
-        case RIGHT:
-        {
-            next = &(tree_node->right);
-
-            break;
-        }
-        case AUTO:
-        {
-            if(val <= tree_node->data) next = &(tree_node->left );
-            else                       next = &(tree_node->right);
-
-            break;
-        }
-        default: return NULL;
-    }
-
-    if(!(*next))
-    {
-        EXEC_ASSERT((*next) = NodeCtor(val), return NULL);
-
-        tree->size++;
-
-        return (*next);
-    }
-
-    return AddNodeSup(tree, (*next), val, pref);
-}
-
 Node *AddNode(Tree *tree, Node *tree_node, const data_t val, PlacePref pref)
 {
+    ASSERT(val, return NULL);
+
     TREE_VER(tree, NULL);
 
     ASSERT(tree_node, return NULL);
     ASSERT(tree_node == tree->root || TreeSearchParent(tree, tree_node), return NULL);
 
-    return AddNodeSup(tree, tree_node, val, pref);
+    Node **next = &tree_node;
+    while(*next)
+    {
+        switch(pref)
+        {
+            case LEFT:
+            {
+                next = &((*next)->left);
+
+                break;
+            }
+            case RIGHT:
+            {
+                next = &((*next)->right);
+
+                break;
+            }
+            case AUTO:
+            {
+                if(val <= (*next)->data) next = &((*next)->left );
+                else                     next = &((*next)->right);
+
+                break;
+            }
+            default: return NULL;
+        }
+    }
+
+    EXEC_ASSERT((*next) = NodeCtor(val), return NULL);
+    tree->size++;
+
+    return (*next);
 }
 
 
