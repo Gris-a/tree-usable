@@ -14,13 +14,14 @@ extern FILE *LOG_FILE;
 #define LOGS(string) fputs(string, LOG_FILE)
 
 #ifdef PROTECT
-#define ASSERT(condition, action)   if(!(condition)) {\
-                                        LOG ("%s:%s:%d: Assertion cathced at ASSERT(", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
-                                        LOGS(#condition);\
-                                        LOG (", ...);\n");\
-                                        \
-                                        action;\
-                                    }
+#define ASSERT(condition, action) if(!(condition))\
+                                  {\
+                                      LOG ("%s:%s:%d: Assertion cathced at ASSERT(", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
+                                      LOGS(#condition);\
+                                      LOG (", ...);\n");\
+                                      \
+                                      action;\
+                                  }
 #else
 #define ASSERT(condition, action)
 #endif

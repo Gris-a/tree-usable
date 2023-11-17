@@ -5,7 +5,8 @@
 
 #include "../include/tree.h"
 
-Tree TreeCtor(const data_t init_val) {
+Tree TreeCtor(const data_t init_val)
+{
     Node *root = NodeCtor(init_val);
 
     ASSERT(root, return {});
@@ -16,7 +17,8 @@ Tree TreeCtor(const data_t init_val) {
 }
 
 
-static void SubTreeDtor(Tree *tree, Node *sub_tree) {
+static void SubTreeDtor(Tree *tree, Node *sub_tree)
+{
     if(!sub_tree) return;
 
     SubTreeDtor(tree, sub_tree->left );
@@ -27,7 +29,8 @@ static void SubTreeDtor(Tree *tree, Node *sub_tree) {
     tree->size--;
 }
 
-int TreeDtor(Tree *tree, Node *root) {
+int TreeDtor(Tree *tree, Node *root)
+{
     TREE_VERIFICATION(tree, EXIT_FAILURE);
 
     ASSERT(root, return EXIT_FAILURE);
@@ -36,9 +39,12 @@ int TreeDtor(Tree *tree, Node *root) {
     SubTreeDtor(tree, root->left );
     SubTreeDtor(tree, root->right);
 
-    if(root == tree->root) {
+    if(root == tree->root)
+    {
         tree->root = NULL;
-    } else {
+    }
+    else
+    {
         root->left  = NULL;
         root->right = NULL;
 
@@ -54,27 +60,35 @@ int TreeDtor(Tree *tree, Node *root) {
     return EXIT_SUCCESS;
 }
 
-Node *AddNode(Tree *tree, Node *tree_node, const data_t val, PlacePref pref) {
+Node *AddNode(Tree *tree, Node *tree_node, const data_t val, PlacePref pref)
+{
     TREE_VERIFICATION(tree, NULL);
 
     ASSERT(tree_node, return NULL);
     ASSERT(tree_node == tree->root || TreeSearchParent(tree, tree_node), return NULL);
 
     Node **next = &tree_node;
-    while(*next) {
-        switch(pref) {
+    while(*next)
+    {
+        switch(pref)
+        {
             case LEFT:
+            {
                 next = &((*next)->left);
                 break;
+            }
             case RIGHT:
+            {
                 next = &((*next)->right);
                 break;
+            }
             case AUTO:
+            {
                 if(val <= (*next)->data) next = &((*next)->left );
                 else                     next = &((*next)->right);
                 break;
-            default:
-                return NULL;
+            }
+            default: return NULL;
         }
     }
 
@@ -88,7 +102,8 @@ Node *AddNode(Tree *tree, Node *tree_node, const data_t val, PlacePref pref) {
 }
 
 
-static Node *SubTreeSearchVal(Node *const tree_node, const data_t val) {
+static Node *SubTreeSearchVal(Node *const tree_node, const data_t val)
+{
     if(!tree_node) return NULL;
     else if(tree_node->data == val) return tree_node;
 
@@ -97,14 +112,16 @@ static Node *SubTreeSearchVal(Node *const tree_node, const data_t val) {
     return (find ? find : SubTreeSearchVal(tree_node->right, val));
 }
 
-Node *TreeSearchVal(Tree *const tree, const data_t val) {
+Node *TreeSearchVal(Tree *const tree, const data_t val)
+{
     TREE_VERIFICATION(tree, NULL);
 
     return SubTreeSearchVal(tree->root, val);
 }
 
 
-static Node *SubTreeSearchParent(Node *const tree_node, Node *const search_node) {
+static Node *SubTreeSearchParent(Node *const tree_node, Node *const search_node)
+{
     if(!tree_node) return NULL;
     else if(tree_node->left  == search_node ||
             tree_node->right == search_node) return tree_node;
@@ -114,7 +131,8 @@ static Node *SubTreeSearchParent(Node *const tree_node, Node *const search_node)
     return (find ? find : SubTreeSearchParent(tree_node->right, search_node));
 }
 
-Node *TreeSearchParent(Tree *const tree, Node *const search_node) {
+Node *TreeSearchParent(Tree *const tree, Node *const search_node)
+{
     TREE_VERIFICATION(tree, NULL);
 
     ASSERT(search_node, return NULL);
@@ -123,7 +141,8 @@ Node *TreeSearchParent(Tree *const tree, Node *const search_node) {
 }
 
 
-Node *NodeCtor(const data_t val, Node *const left, Node *const right) {
+Node *NodeCtor(const data_t val, Node *const left, Node *const right)
+{
     Node *node = (Node *)calloc(1, sizeof(Node));
 
     ASSERT(node, return NULL);
@@ -136,17 +155,16 @@ Node *NodeCtor(const data_t val, Node *const left, Node *const right) {
 }
 
 
-static void MakeDumpDir(void) {
+static void MakeDumpDir(void)
+{
     system("rm -rf dump_tree");
     system("mkdir dump_tree");
 }
 
 
-static void SubTreeTextDump(Node *const tree_node) {
-    if(!tree_node) {
-        LOG("*");
-        return;
-    }
+static void SubTreeTextDump(Node *const tree_node)
+{
+    if(!tree_node) {LOG("*"); return;}
 
     LOG("\n\t(");
 
@@ -157,7 +175,8 @@ static void SubTreeTextDump(Node *const tree_node) {
     LOG(")");
 }
 
-void TreeTextDump(Tree *const tree) {
+void TreeTextDump(Tree *const tree)
+{
     ASSERT(tree, return);
 
     LOG("TREE[%p]:  \n"
@@ -171,7 +190,8 @@ void TreeTextDump(Tree *const tree) {
 }
 
 
-static void DotGraphCtor(Node *const node, Node *const tree_node, const char *direction, FILE *dot_file) {
+static void DotGraphCtor(Node *const node, Node *const tree_node, const char *direction, FILE *dot_file)
+{
     if(!tree_node) return;
 
     fprintf(dot_file, "node%p[label = \"{<data> data: " DATA_FORMAT " | {<left> l: %p| <right> r: %p}}\"];\n",
@@ -183,7 +203,8 @@ static void DotGraphCtor(Node *const node, Node *const tree_node, const char *di
     DotGraphCtor(tree_node, tree_node->right, "right", dot_file);
 }
 
-void TreeDot(Tree *const tree, const char *png_file_name) {
+void TreeDot(Tree *const tree, const char *png_file_name)
+{
     ASSERT(tree && tree->root, return);
     ASSERT(png_file_name    , return);
 
@@ -209,14 +230,15 @@ void TreeDot(Tree *const tree, const char *png_file_name) {
     fclose(dot_file);
 
     char sys_cmd[MAX_STR_LEN] = {};
-    snprintf(sys_cmd, MAX_STR_LEN, "dot tree.dot -T png -o %s", png_file_name);
+    snprintf(sys_cmd, MAX_STR_LEN - 1, "dot tree.dot -T png -o %s", png_file_name);
     system(sys_cmd);
 
     remove("tree.dot");
 }
 
 
-void TreeDump(Tree *tree, const char *caller_func, const int line) {
+void TreeDump(Tree *tree, const char *func, const int line)
+{
     static int num = 0;
 
     ASSERT(tree , return);
@@ -227,19 +249,22 @@ void TreeDump(Tree *tree, const char *caller_func, const int line) {
 
     char file_name[MAX_STR_LEN] = {};
 
-    sprintf(file_name, "dump_tree/tree_dump%d__%s:%d__.png", num, caller_func, line);
+    snprintf(file_name, MAX_STR_LEN - 1, "dump_tree/tree_dump%d__%s:%d__.png", num, func, line);
     TreeDot(tree, file_name);
 
     num++;
 }
 
 
-static Node *ReadSubTree(FILE *source, size_t *counter) {
+static Node *ReadSubTree(FILE *source, size_t *counter)
+{
     char ch = 0;
     fscanf(source, " %c", &ch);
 
-    switch(ch) {
-        case '(': {
+    switch(ch)
+    {
+        case '(':
+        {
             (*counter)++;
 
             data_t node_val = 0;
@@ -258,15 +283,18 @@ static Node *ReadSubTree(FILE *source, size_t *counter) {
 
             return NodeCtor(node_val, left, right);
         }
-        case '*':
-            return NULL;
+        case '*': return NULL;
         default:
+        {
             LOG("Invalid data.\n");
+
             return NULL;
+        }
     }
 }
 
-Tree ReadTree(const char *file_name) {
+Tree ReadTree(const char *file_name)
+{
     FILE *source = fopen(file_name, "rb");
     ASSERT(source, return {});
 

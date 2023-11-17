@@ -7,10 +7,12 @@
 
 FILE *LOG_FILE = OpenLog();
 
-FILE *OpenLog(void) {
+FILE *OpenLog(void)
+{
     FILE *log_file = fopen("log.log", "wb");
 
-    if(log_file == NULL) {
+    if(log_file == NULL)
+    {
         fprintf(stderr, "Can`t open log-file.\n"
                         "Using stderr insead.\n");
         return stderr;
@@ -23,7 +25,8 @@ FILE *OpenLog(void) {
     return log_file;
 }
 
-void CloseLog(void) {
+void CloseLog(void)
+{
     fflush(LOG_FILE);
 
     fclose(LOG_FILE);
