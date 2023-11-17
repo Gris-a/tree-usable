@@ -5,28 +5,25 @@
 
 #include "../include/log.h"
 
-FILE *LOG_FILE = open_log();
+FILE *LOG_FILE = OpenLog();
 
-FILE *open_log(void)
-{
-    FILE *file = fopen("log.log", "wb");
-    if(file == NULL)
-    {
+FILE *OpenLog(void) {
+    FILE *log_file = fopen("log.log", "wb");
+
+    if(log_file == NULL) {
         fprintf(stderr, "Can`t open log-file.\n"
                         "Using stderr insead.\n");
-
         return stderr;
     }
 
-    atexit(close_log);
+    atexit(CloseLog);
 
-    setbuf(file, NULL);
+    setbuf(log_file, NULL);
 
-    return file;
+    return log_file;
 }
 
-void close_log(void)
-{
+void CloseLog(void) {
     fflush(LOG_FILE);
 
     fclose(LOG_FILE);
