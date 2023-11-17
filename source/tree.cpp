@@ -156,28 +156,65 @@ Node *NodeCtor(const data_t val, Node *const left, Node *const right)
 }
 
 
-static void NodeEdgeGen(Node *const node, Node *const node_next, char const *direction, FILE *file)
+static void MakeDumpDir(void)
 {
-    if(node_next)
+    system("rm -rf dump_tree");
+    system("mkdir dump_tree");
+}
+
+
+static void SubTreeTextDump(Node *const tree_node, FILE *dump_file)
+{
+    if(!tree_node) {fprintf(dump_file, "*"); return;}
+
+    fprintf(dump_file, "\n\t(");
+
+    fprintf(dump_file, DTS " ", tree_node->data);
+    SubTreeTextDump(tree_node->left , dump_file);
+    SubTreeTextDump(tree_node->right, dump_file);
+
+    fprintf(dump_file, ")");
+}
+
+void TreeTextDump(Tree *const tree, FILE *dump_file)
+{
+    ASSERT(tree     , return);
+    ASSERT(dump_file, return);
+
+    if(dump_file == LOG_FILE)
     {
-        fprintf(file, "node%p[label = \"{<data> data: " DTS " | {<left> l: %p| <right> r: %p}}\"];\n",
-                                        node_next, node_next->data, node_next->left, node_next->right);
-
-        fprintf(file, "node%p:<%s>:s -> node%p:<data>:n;\n", node, direction, node_next);
-
-        NodeEdgeGen(node_next, node_next->left , "left" , file);
-        NodeEdgeGen(node_next, node_next->right, "right", file);
+        fprintf(dump_file, "TREE[%p]:  \n"
+                           "\troot: %p \n"
+                           "\tsize: %zu\n", tree, tree->root, tree->size);
     }
+
+    ASSERT(tree->root, return);
+
+    SubTreeTextDump(tree->root, dump_file);
+    fprintf(dump_file, "\n\n");
+}
+
+
+static void NodeEdgeGen(Node *const node, Node *const node_next, const char *direction, FILE *file)
+{
+    if(!node_next) return;
+
+    fprintf(file, "node%p[label = \"{<data> data: " DTS " | {<left> l: %p| <right> r: %p}}\"];\n",
+                                    node_next, node_next->data, node_next->left, node_next->right);
+
+    fprintf(file, "node%p:<%s>:s -> node%p:<data>:n;\n", node, direction, node_next);
+
+    NodeEdgeGen(node_next, node_next->left , "left" , file);
+    NodeEdgeGen(node_next, node_next->right, "right", file);
 }
 
 void TreeDot(Tree *const tree, const char *path)
 {
-    ASSERT(tree, return);
+    ASSERT(tree && tree->root, return);
     ASSERT(path, return);
 
-    FILE *file = fopen(path, "wb");
+    FILE *file = fopen("tree.dot", "wb");
     ASSERT(file, return);
-    setbuf(file, NULL);
 
     fprintf(file, "digraph\n"
                   "{\n"
@@ -187,43 +224,42 @@ void TreeDot(Tree *const tree, const char *path)
                   "{rank = source;");
     fprintf(file, "nodel[label = \"<root> root: %p | <size> size: %zu\"; fillcolor = \"lightblue\"];", tree->root, tree->size);
 
-    ASSERT(tree->root, return);
-
     fprintf(file, "node%p[label = \"{<data> data: " DTS " | {<left> l: %p| <right> r: %p}}\"; fillcolor = \"orchid\"]};\n",
                                                         tree->root, tree->root->data, tree->root->left, tree->root->right);
 
-    NodeEdgeGen(tree->root, tree->root->left , "left", file);
+    NodeEdgeGen(tree->root, tree->root->left , "left" , file);
     NodeEdgeGen(tree->root, tree->root->right, "right", file);
 
     fprintf(file, "}\n");
 
     fclose(file);
 
-    char sys_cmd[1000] = {};
-    sprintf(sys_cmd, "dot %s -T png -o tree.png", path);
+    char sys_cmd[MAX_CMD_LEN] = {};
+    sprintf(sys_cmd, "dot tree.dot -T png -o %s", path);
     system(sys_cmd);
+
+    remove("tree.dot");
 }
 
 
-static void SubTreeDump(Node *const tree_node, FILE *dump_file)
+void TreeDump(Tree *tree, const char *func, const int line)
 {
-    if(!tree_node) {fprintf(dump_file, "*"); return;}
+    static int num = 0;
 
-    fprintf(dump_file, "\n(");
-    fprintf(dump_file, DTS " ", tree_node->data);
-    SubTreeDump(tree_node->left , dump_file);
-    SubTreeDump(tree_node->right, dump_file);
-    fprintf(dump_file, ")");
-}
-
-void TreeDump(Tree *const tree, FILE *dump_file)
-{
     ASSERT(tree, return);
 
-    fprintf(dump_file, "\n\n");
-    SubTreeDump(tree->root, dump_file);
-    fprintf(dump_file, "\n\n");
+    if(num == 0) MakeDumpDir();
+
+    char path[MAX_CMD_LEN] = {};
+
+    TreeTextDump(tree);
+
+    sprintf(path, "dump_tree/tree_dump%d__%s:%d__.png", num, func, line);
+    TreeDot(tree, path);
+
+    num++;
 }
+
 
 static Node *ReadSubTree(FILE *file, size_t *counter)
 {
