@@ -29,7 +29,7 @@ enum PlacePref
 };
 
 #define TREE_DUMP(tree_ptr) LOG("%s:%s:%d:\n", __FILE__, __PRETTY_FUNCTION__, __LINE__);\
-                            TreeDump(tree_ptr);\
+                            TreeDump(tree_ptr, LOG_FILE);\
                             TreeDot(tree_ptr, "tree.dot")
 
 #ifdef PROTECT
@@ -57,7 +57,7 @@ Node *NodeCtor(const data_t val, Node *const left = NULL, Node *const right = NU
 
 void TreeDot(Tree *const tree, const char *path);
 
-void TreeDump(Tree *const tree);
+void TreeDump(Tree *const tree, FILE *dump_file);
 
 Tree ReadTree(const char *path);
 

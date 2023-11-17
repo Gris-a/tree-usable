@@ -130,7 +130,7 @@ static Node *SubTreeSearchParent(Node *const tree_node, Node *const search_node)
 
     Node *find  = SubTreeSearchParent(tree_node->left , search_node);
 
-    return (find ? find : SubTreeSearchParent(tree_node->right, search_node););
+    return (find ? find : SubTreeSearchParent(tree_node->right, search_node));
 }
 
 Node *TreeSearchParent(Tree *const tree, Node *const search_node)
@@ -156,17 +156,17 @@ Node *NodeCtor(const data_t val, Node *const left, Node *const right)
 }
 
 
-static void NodeEdgeGen(Node *const node, Node *const node_next, FILE *file)
+static void NodeEdgeGen(Node *const node, Node *const node_next, char const *direction, FILE *file)
 {
     if(node_next)
     {
         fprintf(file, "node%p[label = \"{<data> data: " DTS " | {<left> l: %p| <right> r: %p}}\"];\n",
                                         node_next, node_next->data, node_next->left, node_next->right);
 
-        fprintf(file, "node%p:<left>:s -> node%p:<data>:n;\n", node, node_next);
+        fprintf(file, "node%p:<%s>:s -> node%p:<data>:n;\n", node, direction, node_next);
 
-        NodeEdgeGen(node_next, node_next->left , file);
-        NodeEdgeGen(node_next, node_next->right, file);
+        NodeEdgeGen(node_next, node_next->left , "left" , file);
+        NodeEdgeGen(node_next, node_next->right, "right", file);
     }
 }
 
@@ -192,8 +192,8 @@ void TreeDot(Tree *const tree, const char *path)
     fprintf(file, "node%p[label = \"{<data> data: " DTS " | {<left> l: %p| <right> r: %p}}\"; fillcolor = \"orchid\"]};\n",
                                                         tree->root, tree->root->data, tree->root->left, tree->root->right);
 
-    NodeEdgeGen(tree->root, tree->root->left , file);
-    NodeEdgeGen(tree->root, tree->root->right, file);
+    NodeEdgeGen(tree->root, tree->root->left , "left", file);
+    NodeEdgeGen(tree->root, tree->root->right, "right", file);
 
     fprintf(file, "}\n");
 
@@ -205,26 +205,25 @@ void TreeDot(Tree *const tree, const char *path)
 }
 
 
-static void SubTreeDump(Node *const tree_node)
+static void SubTreeDump(Node *const tree_node, FILE *dump_file)
 {
-    if(!tree_node) {LOG("*"); return;}
+    if(!tree_node) {fprintf(dump_file, "*"); return;}
 
-    LOG("\n(");
-    LOG(DTS " ", tree_node->data);
-    SubTreeDump(tree_node->left);
-    SubTreeDump(tree_node->right);
-    LOG(")");
+    fprintf(dump_file, "\n(");
+    fprintf(dump_file, DTS " ", tree_node->data);
+    SubTreeDump(tree_node->left , dump_file);
+    SubTreeDump(tree_node->right, dump_file);
+    fprintf(dump_file, ")");
 }
 
-void TreeDump(Tree *const tree)
+void TreeDump(Tree *const tree, FILE *dump_file)
 {
     ASSERT(tree, return);
 
-    LOG("\n\n");
-    SubTreeDump(tree->root);
-    LOG("\n\n");
+    fprintf(dump_file, "\n\n");
+    SubTreeDump(tree->root, dump_file);
+    fprintf(dump_file, "\n\n");
 }
-
 
 static Node *ReadSubTree(FILE *file, size_t *counter)
 {
@@ -290,7 +289,8 @@ static void TreeSizeVer(Tree *const tree, Node *const tree_node, size_t *counter
 
 int TreeVer(Tree *const tree)
 {
-    ASSERT(tree && tree->root, return EXIT_FAILURE);
+    ASSERT(tree && tree->root    , return EXIT_FAILURE);
+    ASSERT(tree->size <= UINT_MAX, return EXIT_FAILURE);
 
     size_t counter = 0;
     TreeSizeVer(tree, tree->root, &counter);
