@@ -1,6 +1,8 @@
 #ifndef TREE_H
 #define TREE_H
 
+#include <stdbool.h>
+
 #include "log.h"
 
 typedef int data_t;

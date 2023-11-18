@@ -206,7 +206,7 @@ static void DotGraphCtor(Node *const node, Node *const tree_node, const char *di
 void TreeDot(Tree *const tree, const char *png_file_name)
 {
     ASSERT(tree && tree->root, return);
-    ASSERT(png_file_name    , return);
+    ASSERT(png_file_name     , return);
 
     FILE *dot_file = fopen("tree.dot", "wb");
     ASSERT(dot_file, return);
@@ -245,9 +245,9 @@ void TreeDump(Tree *tree, const char *func, const int line)
 
     if(num == 0) MakeDumpDir();
 
-    TreeTextDump(tree);
-
     char file_name[MAX_STR_LEN] = {};
+
+    TreeTextDump(tree);
 
     snprintf(file_name, MAX_STR_LEN - 1, "dump_tree/tree_dump%d__%s:%d__.png", num, func, line);
     TreeDot(tree, file_name);
@@ -283,7 +283,10 @@ static Node *ReadSubTree(FILE *source, size_t *counter)
 
             return NodeCtor(node_val, left, right);
         }
-        case '*': return NULL;
+        case '*':
+        {
+            return NULL;
+        }
         default:
         {
             LOG("Invalid data.\n");
@@ -312,7 +315,7 @@ Tree ReadTree(const char *file_name)
 #ifdef PROTECT
 static void TreeSizeValidation(Tree *const tree, Node *const tree_node, size_t *counter)
 {
-    if(!(tree_node) || (*counter) > tree->size) return;
+    if(!(tree_node) || (*counter) >= tree->size) return;
     (*counter)++;
 
     TreeSizeValidation(tree, tree_node->left , counter);
