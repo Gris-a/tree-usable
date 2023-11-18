@@ -34,10 +34,13 @@ int TreeDtor(Tree *tree, Node *root)
     TREE_VERIFICATION(tree, EXIT_FAILURE);
 
     ASSERT(root, return EXIT_FAILURE);
-    ASSERT(root == tree->root || TreeSearchParent(tree, root), return EXIT_FAILURE);
+    ASSERT(root == tree->root || (TreeSearchParent(tree, root) != NULL), return EXIT_FAILURE);
 
-    SubTreeDtor(tree, root->left );
+    SubTreeDtor(tree, root->left);
+    root->left  = NULL;
+
     SubTreeDtor(tree, root->right);
+    root->right = NULL;
 
     if(root == tree->root)
     {
@@ -45,9 +48,6 @@ int TreeDtor(Tree *tree, Node *root)
     }
     else
     {
-        root->left  = NULL;
-        root->right = NULL;
-
         Node *parent = TreeSearchParent(tree, root);
 
         if(parent->left == root) parent->left  = NULL;
@@ -60,12 +60,13 @@ int TreeDtor(Tree *tree, Node *root)
     return EXIT_SUCCESS;
 }
 
+
 Node *AddNode(Tree *tree, Node *tree_node, const data_t val, PlacePref pref)
 {
     TREE_VERIFICATION(tree, NULL);
 
     ASSERT(tree_node, return NULL);
-    ASSERT(tree_node == tree->root || TreeSearchParent(tree, tree_node), return NULL);
+    ASSERT(tree_node == tree->root || (TreeSearchParent(tree, tree_node) != NULL), return NULL);
 
     Node **next = &tree_node;
     while(*next)
@@ -169,6 +170,7 @@ static void SubTreeTextDump(Node *const tree_node)
     LOG("\n\t(");
 
     LOG(DATA_FORMAT " ", tree_node->data);
+
     SubTreeTextDump(tree_node->left );
     SubTreeTextDump(tree_node->right);
 
@@ -183,14 +185,14 @@ void TreeTextDump(Tree *const tree)
         "\troot: %p \n"
         "\tsize: %zu\n", tree, tree->root, tree->size);
 
-    ASSERT(tree->root, return);
+    if(!tree->root) return;
 
     SubTreeTextDump(tree->root);
     LOG("\n\n");
 }
 
 
-static void DotGraphCtor(Node *const node, Node *const tree_node, const char *direction, FILE *dot_file)
+static void DotTreeCtor(Node *const node, Node *const tree_node, const char *direction, FILE *dot_file)
 {
     if(!tree_node) return;
 
@@ -199,8 +201,8 @@ static void DotGraphCtor(Node *const node, Node *const tree_node, const char *di
 
     fprintf(dot_file, "node%p:<%s>:s -> node%p:<data>:n;\n", node, direction, tree_node);
 
-    DotGraphCtor(tree_node, tree_node->left , "left" , dot_file);
-    DotGraphCtor(tree_node, tree_node->right, "right", dot_file);
+    DotTreeCtor(tree_node, tree_node->left , "left" , dot_file);
+    DotTreeCtor(tree_node, tree_node->right, "right", dot_file);
 }
 
 void TreeDot(Tree *const tree, const char *png_file_name)
@@ -222,8 +224,8 @@ void TreeDot(Tree *const tree, const char *png_file_name)
     fprintf(dot_file, "node%p[label = \"{<data> data: " DATA_FORMAT " | {<left> l: %p| <right> r: %p}}\"; fillcolor = \"orchid\"]};\n",
                                                                     tree->root, tree->root->data, tree->root->left, tree->root->right);
 
-    DotGraphCtor(tree->root, tree->root->left , "left" , dot_file);
-    DotGraphCtor(tree->root, tree->root->right, "right", dot_file);
+    DotTreeCtor(tree->root, tree->root->left , "left" , dot_file);
+    DotTreeCtor(tree->root, tree->root->right, "right", dot_file);
 
     fprintf(dot_file, "}\n");
 
@@ -269,17 +271,29 @@ static Node *ReadSubTree(FILE *source, size_t *counter)
 
             data_t node_val = 0;
 
-            fscanf(source, DATA_FORMAT, &node_val);
+            bool is_scaned = fscanf(source, DATA_FORMAT, &node_val);
+
+            if(!is_scaned)
+            {
+                LOG("Invalid data.\n");
+
+                return NULL;
+            }
 
             Node *left  = ReadSubTree(source, counter);
             Node *right = ReadSubTree(source, counter);
 
             fscanf(source, " %c", &ch);
 
-            ASSERT(ch == ')', LOG("Ivalid data.\n");
-                              free(left );
-                              free(right);
-                              return NULL);
+            if(ch != ')')
+            {
+                LOG("Invalid data.\n");
+
+                free(left );
+                free(right);
+
+                return NULL;
+            }
 
             return NodeCtor(node_val, left, right);
         }
@@ -316,6 +330,7 @@ Tree ReadTree(const char *file_name)
 static void TreeSizeValidation(Tree *const tree, Node *const tree_node, size_t *counter)
 {
     if(!(tree_node) || (*counter) >= tree->size) return;
+
     (*counter)++;
 
     TreeSizeValidation(tree, tree_node->left , counter);
